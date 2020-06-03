@@ -1,6 +1,12 @@
 # SceneView Bookmarks
  Scene View shortcuts to bookmark view positions and states (layer visibility and locked state, shading mode, lighting, effects, grid visibility, etc).
 
+# Install through the Package Manager
+1. Go to Window/Package Manager.
+2. Click on the + icon and select "Add package from git URL...".
+2. Copy/paste the following url in the field and click on Add.
+- git@github.com:FredMoreau/SceneViewBookmarks.git
+
 # Features
 - Save/Load SceneView Bookmarks (position, direction, ortho/persp, 2D, Shading Mode, View States (Skybox, Fog, etc), grid, gizmos, visible and locked layers).
 - Built-in Views (Perspective, Top, Front, UI).
