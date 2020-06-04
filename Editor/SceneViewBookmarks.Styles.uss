@@ -1,0 +1,31 @@
+.svbm-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-self: flex-start;
+    background-color: #555;
+}
+
+.svbm-row:hover {
+    background-color: #222;
+}
+
+.svbm-cell-button {
+    width:60px;
+}
+
+.svbm-cell-button:hover {
+    background-color: #888;
+}
+
+.svbm-cell-text {
+    width:220px;
+}
+
+.svbm-cell-checkbox {
+    width:24px;
+    align-content: center;
+}
+
+.svbm-cell-mask {
+    width:100px;
+}

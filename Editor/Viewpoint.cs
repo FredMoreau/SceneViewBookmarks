@@ -1,32 +1,57 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 
 #if CINEMACHINE
 using Cinemachine;
 #endif
 
+// TODO : add grid direction
+
 namespace UnityEditor.SceneViewBookmarks
 {
-    [System.Serializable]
+    [Serializable]
     public class Viewpoint
     {
+        [Flags]
+        public enum Overrides : int
+        {
+            Position = 1,
+            Direction = 2,
+            FieldOfView = 4,
+            IsOrtho = 8,
+            Is2D = 16,
+            CameraMode = 32,
+            Lighting = 64,
+            ViewStates = 128,
+            Grid = 256,
+            Gizmos = 512,
+            VisibleLayers = 1024,
+            LockedLayers = 2048
+        }
+
         public string name;
-        public string notes;
         public ViewSettings settings;
         public LayerMask visibleLayers;
         public LayerMask lockedLayers;
-        public bool staysInPlace = false;
+        public Overrides overrides = (Overrides) (-1);
         public Action postAction;
 
-        public Viewpoint(string name, ViewSettings settings, LayerMask visibleLayers, LayerMask lockedLayers, bool staysInPlace = false, Action postAction = null)
+        public Viewpoint(string name, ViewSettings settings, LayerMask visibleLayers, LayerMask lockedLayers, Overrides overrides = (Overrides)(-1), Action postAction = null)
         {
             this.name = name;
             this.settings = settings;
             this.visibleLayers = visibleLayers;
             this.lockedLayers = lockedLayers;
-            this.staysInPlace = staysInPlace;
+            this.overrides = overrides;
+            this.postAction = postAction;
+        }
+
+        public Viewpoint(string name, ViewSettings settings, LayerMask visibleLayers, LayerMask lockedLayers, Action postAction = null)
+        {
+            this.name = name;
+            this.settings = settings;
+            this.visibleLayers = visibleLayers;
+            this.lockedLayers = lockedLayers;
             this.postAction = postAction;
         }
 
@@ -40,9 +65,14 @@ namespace UnityEditor.SceneViewBookmarks
 
         public void Load(SceneView view)
         {
-            view.ApplySettings(settings, staysInPlace);
-            Tools.visibleLayers = visibleLayers;
-            Tools.lockedLayers = lockedLayers;
+            view.ApplySettings(settings, overrides);
+
+            if (overrides.Contains(Overrides.VisibleLayers))
+                Tools.visibleLayers = visibleLayers;
+
+            if (overrides.Contains(Overrides.VisibleLayers))
+                Tools.lockedLayers = lockedLayers;
+
             postAction?.Invoke();
         }
 

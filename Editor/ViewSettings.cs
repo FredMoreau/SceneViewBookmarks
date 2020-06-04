@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System.IO;
+﻿using UnityEngine;
 using System;
 
 #if CINEMACHINE
@@ -10,7 +7,7 @@ using Cinemachine;
 
 namespace UnityEditor.SceneViewBookmarks
 {
-    [System.Serializable]
+    [Serializable]
     public struct ViewSettings
     {
         public Vector3 pivot;
@@ -36,7 +33,7 @@ namespace UnityEditor.SceneViewBookmarks
             this.mode = sceneView.cameraMode;
             this.drawGizmos = sceneView.drawGizmos;
             this.sceneLighting = sceneView.sceneLighting;
-            this.sceneViewState = sceneView.sceneViewState;
+            this.sceneViewState = new SceneView.SceneViewState(sceneView.sceneViewState);
             this.showGrid = sceneView.showGrid;
         }
 
@@ -51,7 +48,7 @@ namespace UnityEditor.SceneViewBookmarks
             this.mode = cameraMode;
             this.drawGizmos = drawGizmos;
             this.sceneLighting = sceneLighting;
-            this.sceneViewState = sceneViewState;
+            this.sceneViewState = new SceneView.SceneViewState(sceneViewState);
             this.showGrid = showGrid;
         }
     }

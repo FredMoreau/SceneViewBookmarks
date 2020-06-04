@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using UnityEngine.SceneManagement;
@@ -12,11 +11,13 @@ using Cinemachine;
 using UnityEditor.DiscoveryMenu;
 #endif
 
-// TODO : save in Project Settings
-// TODO : make it work on GameView Cameras
+// TODO : move built-in views to Editor Settings
+// DONE : make it work on GameView Cameras
 // FIXME : loading a new scene throws errors when Camera is linked.
 // FIXME : camera's overweritten on scene load if Link was left on.
-// FIXME : if SOLO isn't active and Link is, the same camera is applied changes. 
+// FIXME : if SOLO isn't active and Link is, the same camera is applied changes.
+// FIXME : if link is active and a bookmark is selected, the camera moves to that location. Add a warning ?
+// FIXME : switching from a 2D view to a Camera gives weird results
 
 namespace UnityEditor.SceneViewBookmarks
 {
@@ -30,7 +31,7 @@ namespace UnityEditor.SceneViewBookmarks
         static bool showAsSceneViewGUI = default;
         static bool linkMainCamera = default;
         static bool linkFOV = default;
-        static readonly string path = Path.Combine(Application.dataPath, "SceneViewBookmarks.json");
+        public static readonly string path = Path.Combine(Application.dataPath, "SceneViewBookmarks.json");
         static readonly string[] reservedTopMenuItemNames = new string[1] { "Options" };
 
 #if CINEMACHINE
@@ -46,33 +47,20 @@ namespace UnityEditor.SceneViewBookmarks
             allDisabled.SetAllEnabled(false);
 
             var perspective_settings = new ViewSettings(Vector3.zero, Quaternion.Euler(30f, -50f, 0), 100f, false, 60f, false, SceneView.GetBuiltinCameraMode(DrawCameraMode.Textured), true, true, new SceneView.SceneViewState(), true);
-            var perspective_view = new Viewpoint("Perspective (Shaded)", perspective_settings, -1 ^ (1 << 5), 0, true, () =>
-            {
-                //Debug.Log(Tools.visibleLayers.ToBinaryString());
-                //SceneView.lastActiveSceneView.FrameLayers(Tools.visibleLayers);
-            });
+            var perspective_view = new Viewpoint("Perspective (Shaded)", perspective_settings, -1 ^ (1 << 5), 0, (Viewpoint.Overrides)(-1) ^ Viewpoint.Overrides.Position);
             instance.builtin_viewpoints.Add(perspective_view);
 
             var top_settings = new ViewSettings(Vector3.zero, Quaternion.LookRotation(Vector3.down, Vector3.forward), 100f, true, 60f, false, SceneView.GetBuiltinCameraMode(DrawCameraMode.Wireframe), true, false, allDisabled, true);
-            var top_view = new Viewpoint("Top (Wireframe, UI Hidden)", top_settings, -1 ^ (1 << 5), 0, true, () =>
-            {
-                //Debug.Log(Tools.visibleLayers.ToBinaryString());
-                //SceneView.lastActiveSceneView.FrameLayers(Tools.visibleLayers);
-            });
+            var top_view = new Viewpoint("Top (Wireframe, UI Hidden)", top_settings, -1 ^ (1 << 5), 0, (Viewpoint.Overrides)(-1) ^ Viewpoint.Overrides.Position);
             instance.builtin_viewpoints.Add(top_view);
 
             var front_settings = new ViewSettings(Vector3.zero, Quaternion.LookRotation(Vector3.forward, Vector3.up), 100f, true, 60f, false, SceneView.GetBuiltinCameraMode(DrawCameraMode.Wireframe), true, false, allDisabled, true);
-            var front_view = new Viewpoint("Front (Wireframe, UI Hidden)", front_settings, -1 ^ (1 << 5), 0, true, () =>
-            {
-                //Debug.Log(Tools.visibleLayers.ToBinaryString());
-                //SceneView.lastActiveSceneView.FrameLayers(Tools.visibleLayers);
-            });
+            var front_view = new Viewpoint("Front (Wireframe, UI Hidden)", front_settings, -1 ^ (1 << 5), 0, (Viewpoint.Overrides)(-1) ^ Viewpoint.Overrides.Position);
             instance.builtin_viewpoints.Add(front_view);
 
             var ui_settings = new ViewSettings(Vector3.zero, Quaternion.identity, 100f, true, 60f, true, SceneView.GetBuiltinCameraMode(DrawCameraMode.Textured), true, true, allDisabled, true);
-            var ui_view = new Viewpoint("2D (UI Only)", ui_settings, 0 ^ (1 << 5), 0, true, () =>
+            var ui_view = new Viewpoint("2D (UI Only)", ui_settings, 0 ^ (1 << 5), 0, () =>
             {
-                //Debug.Log(Tools.visibleLayers.ToBinaryString());
                 SceneView.lastActiveSceneView.FrameLayers(Tools.visibleLayers);
             });
             instance.builtin_viewpoints.Add(ui_view);
@@ -82,9 +70,11 @@ namespace UnityEditor.SceneViewBookmarks
             SceneView.duringSceneGui += SceneView_duringSceneGui;
             EditorApplication.quitting += EditorApplication_quitting;
 
+#if DISCOVERY_MENU
             HotBoxMenuItem hotBoxMenuItem = new HotBoxMenuItem("Views");
             hotBoxMenuItem.Refresh = () => { hotBoxMenuItem.menu = QuickAccessMenu(SceneView.lastActiveSceneView); };
             SceneViewHotBox.menuItems.Add("Views", hotBoxMenuItem);
+#endif
         }
 
         private static void EditorApplication_quitting()
@@ -141,11 +131,19 @@ namespace UnityEditor.SceneViewBookmarks
             }
 
             menu.AddSeparator("");
-            
+
             //foreach (Camera c in Object.FindObjectsOfType<Camera>()) // TODO : add the includeInactive parameter when possible
             foreach (Camera c in FindObjectsOfTypeAll<Camera>())
             {
-                menu.AddItem(new GUIContent("Cameras/" + c.name), false, () => sceneview.AlignViewToObject(c.transform));
+                menu.AddItem(new GUIContent("Cameras/" + c.name), false, () =>
+                {
+                    sceneview.in2DMode = false;
+                    if (sceneview.orthographic = c.orthographic)
+                        sceneview.size = c.orthographicSize; // FIXME not working as expected
+                    else
+                        sceneview.cameraSettings.fieldOfView = c.fieldOfView;
+                    sceneview.AlignViewToObject(c.transform);
+                });
             }
 
 #if CINEMACHINE
@@ -154,6 +152,11 @@ namespace UnityEditor.SceneViewBookmarks
             {
                 menu.AddItem(new GUIContent("Virtual Cameras/" + c.name), false, () =>
                 {
+                    sceneview.in2DMode = false;
+                    if (sceneview.orthographic = c.m_Lens.Orthographic)
+                        sceneview.size = c.m_Lens.OrthographicSize; // FIXME not working as expected
+                    else
+                        sceneview.cameraSettings.fieldOfView = c.m_Lens.FieldOfView;
                     sceneview.AlignViewToObject(c.transform);
                     if (soloVirtualCamerasOnSelection || linkMainCamera)
 					{
@@ -173,6 +176,12 @@ namespace UnityEditor.SceneViewBookmarks
 
             menu.AddSeparator("");
             menu.AddItem(new GUIContent("Bookmark View", "Saves the current view as a Bookmark."), false, () => SavePopup.Open(sceneview));
+            menu.AddSeparator("");
+            //menu.AddItem(new GUIContent("Filter/LOD", "Filters View."), false, () => SceneModeUtility.SearchForType(typeof(LODGroup)));
+            menu.AddItem(new GUIContent("Filter/LOD Groups", "Filters View."), false, () => sceneview.SetSearchFilter("LODGroup", 2));
+            menu.AddItem(new GUIContent("Filter/Colliders", "Filters View."), false, () => sceneview.SetSearchFilter("Collider", 2));
+            menu.AddItem(new GUIContent("Filter/Renderer", "Filters View."), false, () => sceneview.SetSearchFilter("Renderer", 2));
+            menu.AddItem(new GUIContent("Filter/Metadata", "Filters View."), false, () => sceneview.SetSearchFilter("Metadata", 2));
             menu.AddSeparator("");
             menu.AddItem(new GUIContent("Frame All"), false, () => { sceneview.FrameAll(); });
             menu.AddItem(new GUIContent("Frame Visible Layers"), false, () => { sceneview.FrameLayers(Tools.visibleLayers); });
@@ -199,6 +208,7 @@ namespace UnityEditor.SceneViewBookmarks
             if (selectedObject == null)
                 return;
 
+            sceneview.in2DMode = false;
             sceneview.AlignViewToObject(selectedObject.transform);
 
             //sceneview.rotation = selectedObject.transform.rotation;
