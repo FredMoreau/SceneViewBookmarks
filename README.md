@@ -18,6 +18,7 @@
 
 # Known Limitations
 - If a Camera is Linked and a Bookmark is recalled, the Camera is moved without warning.
+- When aligning to an Ortho Camera, the size doesn't match.
 
 # Future Improvements
 - Saving to Editor / Project Settings (currently saves to Assets/SceneViewBookmarks.json).
