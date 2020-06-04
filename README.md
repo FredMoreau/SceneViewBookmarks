@@ -8,6 +8,7 @@
 - git@github.com:FredMoreau/SceneViewBookmarks.git
 
 # Features
+- Quick Access Menu (Ctrl + Right Click in SceneView).
 - Save/Load SceneView Bookmarks (position, direction, ortho/persp, 2D, Shading Mode, View States (Skybox, Fog, etc), grid, gizmos, visible and locked layers).
 - Built-in Views (Perspective, Top, Front, UI).
 - Cameras/Cinemachine Virtual Cameras shortcuts.
