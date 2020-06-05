@@ -15,6 +15,7 @@
 - Filters (LOD Group, Collider, Renderer, Metadata).
 - Bookmarks Editor Window.
 - Link Main Camera (or current Virtual Camera) to Scene View.
+- Dolly Zoom (FOV) with Ctrl + Mouse Scrollwheel.
 
 # Known Limitations
 - If a Camera is Linked and a Bookmark is recalled, the Camera is moved without warning.
