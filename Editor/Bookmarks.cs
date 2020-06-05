@@ -95,6 +95,15 @@ namespace UnityEditor.SceneViewBookmarks
         private static void SceneView_duringSceneGui(SceneView sceneview)
         {
             var e = Event.current;
+            if (e.type == EventType.KeyUp)
+            {
+                Viewpoint shortcutView;
+                if ((shortcutView = Instance?.viewpoints.Find((x) => x.shortcut == e.keyCode)) != null)
+                {
+                    shortcutView.Load(sceneview);
+                    e.Use();
+                }
+            }
             if (e.control && e.isScrollWheel)
             {
                 sceneview.cameraSettings.fieldOfView += e.delta.y;

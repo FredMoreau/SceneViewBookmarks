@@ -196,6 +196,11 @@ namespace UnityEditor.SceneViewBookmarks
                 lockedLayerMask.RegisterValueChangedCallback((x) => Bookmarks.Instance[index].lockedLayers = x.newValue);
                 bookmarkElement.Add(lockedLayerMask);
 
+                EnumField shortcutMask = new EnumField("", Bookmarks.Instance[index].shortcut) { tooltip = "Set this bookmark's shortcut\nBeware this will override any other function the shortcut is associated with." };
+                shortcutMask.AddToClassList("svbm-cell-mask");
+                shortcutMask.RegisterValueChangedCallback((x) => Bookmarks.Instance[index].shortcut = (KeyCode)x.newValue);
+                bookmarkElement.Add(shortcutMask);
+
                 Button moveUpButton = new Button(() =>
                 {
                     if (index <= 0)

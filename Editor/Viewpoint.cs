@@ -35,6 +35,7 @@ namespace UnityEditor.SceneViewBookmarks
         public LayerMask lockedLayers;
         public Overrides overrides = (Overrides) (-1);
         public Action postAction;
+        public KeyCode shortcut = KeyCode.None;
 
         public Viewpoint(string name, ViewSettings settings, LayerMask visibleLayers, LayerMask lockedLayers, Overrides overrides = (Overrides)(-1), Action postAction = null)
         {
