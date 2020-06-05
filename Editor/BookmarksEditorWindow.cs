@@ -30,7 +30,7 @@ namespace UnityEditor.SceneViewBookmarks
             window.rootVisualElement.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.unity.sceneview.bookmarks/Editor/SceneViewBookmarks.Styles.uss"));
         }
 
-        GUIContent icon_sceneviewLighting, icon_sceneviewFx, icon_ortho, icon_is2d, icon_grid, icon_locked_layers, icon_visible_layers;
+        GUIContent icon_sceneviewLighting, icon_sceneviewFx, icon_ortho, icon_is2d, icon_grid, icon_locked_layers, icon_visible_layers, icon_camera;
         GUIStyle centeredStyle;
 
         private void OnEnable()
@@ -42,6 +42,7 @@ namespace UnityEditor.SceneViewBookmarks
             icon_grid = EditorGUIUtility.IconContent("d_GridAxisY");
             icon_visible_layers = EditorGUIUtility.IconContent("d_VisibilityOn");
             icon_locked_layers = EditorGUIUtility.IconContent("d_AssemblyLock"); // LockIcon-On, LockIcon, d_AssemblyLock, d_InspectorLock, InspectorLock
+            icon_camera = EditorGUIUtility.IconContent("SceneViewCamera");
             RefreshUI();
         }
 
@@ -56,8 +57,9 @@ namespace UnityEditor.SceneViewBookmarks
             GUILayout.Space(200); // three buttons
             GUILayout.Label("Menu Path / Name", centeredStyle, GUILayout.Width(220)); // text field
             GUILayout.Label("Overrides", centeredStyle, GUILayout.Width(100)); // mask field
-            GUILayout.Label(icon_ortho, GUILayout.Width(24)); // ortho
-            GUILayout.Label(icon_is2d, GUILayout.Width(24)); // is 2d
+            GUILayout.Label(icon_ortho, GUILayout.Width(30)); // ortho
+            GUILayout.Label(icon_is2d, GUILayout.Width(30)); // is 2d
+            GUILayout.Label(icon_camera, GUILayout.Width(30)); // is 2d
             GUILayout.Label("Render Mode", centeredStyle, GUILayout.Width(110)); // mask field
             GUILayout.Label(icon_sceneviewLighting, GUILayout.Width(24)); // scene lighting
             GUILayout.Label(icon_sceneviewFx, GUILayout.Width(100)); // mask field
@@ -139,6 +141,12 @@ namespace UnityEditor.SceneViewBookmarks
                 is2dToggle.AddToClassList("svbm-cell-checkbox");
                 is2dToggle.RegisterValueChangedCallback((x) => Bookmarks.Instance[index].settings.is2D = x.newValue);
                 bookmarkElement.Add(is2dToggle);
+
+                FloatField fovField = new FloatField() { tooltip = "Set this bookmark's Camera Field of View." };
+                fovField.value = Bookmarks.Instance[index].settings.fov;
+                fovField.AddToClassList("svbm-cell-float");
+                fovField.RegisterValueChangedCallback((x) => Bookmarks.Instance[index].settings.fov = Mathf.Clamp(x.newValue, 4, 120));
+                bookmarkElement.Add(fovField);
 
                 EnumField cameraModeMask = new EnumField("", Bookmarks.Instance[index].settings.mode.drawMode) { tooltip = "Set this bookmark's Camera Shading Mode." };
                 cameraModeMask.AddToClassList("svbm-cell-mask");

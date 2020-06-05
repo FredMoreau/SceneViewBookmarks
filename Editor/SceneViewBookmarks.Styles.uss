@@ -29,3 +29,7 @@
 .svbm-cell-mask {
     width:100px;
 }
+
+.svbm-cell-float {
+    width:40px;
+}

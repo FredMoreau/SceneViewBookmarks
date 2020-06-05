@@ -2,19 +2,23 @@
 using UnityEngine;
 using System.IO;
 using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 
 #if CINEMACHINE
 using Cinemachine;
+using System;
+using UnityEditor.SceneManagement;
 #endif
 
 #if DISCOVERY_MENU
 using UnityEditor.DiscoveryMenu;
 #endif
 
-// TODO : move built-in views to Editor Settings
 // DONE : make it work on GameView Cameras
-// FIXME : loading a new scene throws errors when Camera is linked.
-// FIXME : camera's overweritten on scene load if Link was left on.
+// FIXED : loading a new scene throws errors when Camera is linked.
+// FIXED : camera's overweritten on scene load if Link was left on.
+
+// TODO : move built-in views to Editor Settings
 // FIXME : if SOLO isn't active and Link is, the same camera is applied changes.
 // FIXME : if link is active and a bookmark is selected, the camera moves to that location. Add a warning ?
 // FIXME : switching from a 2D view to a Camera gives weird results
@@ -32,7 +36,7 @@ namespace UnityEditor.SceneViewBookmarks
         static bool linkMainCamera = default;
         static bool linkFOV = default;
         public static readonly string path = Path.Combine(Application.dataPath, "SceneViewBookmarks.json");
-        static readonly string[] reservedTopMenuItemNames = new string[1] { "Options" };
+        static readonly string[] reservedTopMenuItemNames = new string[5] { "Options", "Filter", "Cameras", "Virtual Cameras", "Bookmark View" };
 
 #if CINEMACHINE
         static bool soloVirtualCamerasOnSelection = default;
@@ -69,12 +73,18 @@ namespace UnityEditor.SceneViewBookmarks
             instance.LoadFromJson(path);
             SceneView.duringSceneGui += SceneView_duringSceneGui;
             EditorApplication.quitting += EditorApplication_quitting;
+            EditorSceneManager.activeSceneChangedInEditMode += EditorSceneManager_activeSceneChangedInEditMode;
 
 #if DISCOVERY_MENU
             HotBoxMenuItem hotBoxMenuItem = new HotBoxMenuItem("Views");
             hotBoxMenuItem.Refresh = () => { hotBoxMenuItem.menu = QuickAccessMenu(SceneView.lastActiveSceneView); };
             SceneViewHotBox.menuItems.Add("Views", hotBoxMenuItem);
 #endif
+        }
+
+        private static void EditorSceneManager_activeSceneChangedInEditMode(Scene arg0, Scene arg1)
+        {
+            linkMainCamera = false;
         }
 
         private static void EditorApplication_quitting()
@@ -84,6 +94,18 @@ namespace UnityEditor.SceneViewBookmarks
 
         private static void SceneView_duringSceneGui(SceneView sceneview)
         {
+            var e = Event.current;
+            if (e.control && e.isScrollWheel)
+            {
+                sceneview.cameraSettings.fieldOfView += e.delta.y;
+                sceneview.orthographic = sceneview.cameraSettings.fieldOfView < 4;
+                e.Use();
+            }
+            else if (e.control && e.type == EventType.MouseDown && e.button == 1)
+            {
+                QuickAccessMenu(sceneview).ShowAsContext();
+            }
+
             if (linkMainCamera)
             {
                 SnapCamera(Camera.main, sceneview, linkFOV);
@@ -107,12 +129,6 @@ namespace UnityEditor.SceneViewBookmarks
                 GUILayout.EndVertical();
                 Handles.EndGUI();
             }
-
-            var e = Event.current;
-            if (e.control && e.type == EventType.MouseDown && e.button == 1)
-            {
-                QuickAccessMenu(sceneview).ShowAsContext();
-            }
         }
 
         public static GenericMenu QuickAccessMenu(SceneView sceneview)
@@ -120,7 +136,7 @@ namespace UnityEditor.SceneViewBookmarks
             GenericMenu menu = new GenericMenu();
 
             if (linkMainCamera)
-			{
+            {
                 menu.AddItem(new GUIContent("Unlock MainCamera from SceneView"), false, () => linkMainCamera = false);
                 menu.AddSeparator("");
             }
@@ -159,10 +175,10 @@ namespace UnityEditor.SceneViewBookmarks
                         sceneview.cameraSettings.fieldOfView = c.m_Lens.FieldOfView;
                     sceneview.AlignViewToObject(c.transform);
                     if (soloVirtualCamerasOnSelection || linkMainCamera)
-					{
+                    {
                         Selection.activeGameObject = c.gameObject;
                         CinemachineBrain.SoloCamera = c;
-					}
+                    }
                 });
             }
 #endif
@@ -186,7 +202,14 @@ namespace UnityEditor.SceneViewBookmarks
             menu.AddItem(new GUIContent("Frame All"), false, () => { sceneview.FrameAll(); });
             menu.AddItem(new GUIContent("Frame Visible Layers"), false, () => { sceneview.FrameLayers(Tools.visibleLayers); });
             menu.AddItem(new GUIContent("Align to Selection"), false, () => AlignToSelection(sceneview));
-            menu.AddItem(new GUIContent("Snap Main Camera"), false, () => SnapCamera(Camera.main, sceneview));
+            menu.AddItem(new GUIContent("Snap Main Camera"), false, () => SnapCamera(Camera.main, sceneview, linkFOV, true));
+
+            // TODO : experiment with sceneview.rootVisualElement
+            //menu.AddItem(new GUIContent("Options/Show as UIElements"), false, () =>
+            //{
+            //    sceneview.rootVisualElement.Add(new Button(() => Debug.Log("TEST")) { text = "TEST" });
+            //});
+
             menu.AddItem(new GUIContent("Options/Show as GUI"), showAsSceneViewGUI, () => showAsSceneViewGUI = !showAsSceneViewGUI);
             menu.AddItem(new GUIContent("Options/Lock MainCamera to SceneView"), linkMainCamera, () => linkMainCamera = !linkMainCamera);
             menu.AddItem(new GUIContent("Options/Link FOV"), linkFOV, () => linkFOV = !linkFOV);
@@ -233,7 +256,7 @@ namespace UnityEditor.SceneViewBookmarks
 #endif
         }
 
-        static void SnapCamera (Camera camera, SceneView sceneview, bool linkFOV = false)
+        static void SnapCamera (Camera camera, SceneView sceneview, bool linkFOV = false, bool undo = false)
         {
 #if CINEMACHINE
             CinemachineBrain brain = camera.GetComponent<CinemachineBrain>();
@@ -245,19 +268,36 @@ namespace UnityEditor.SceneViewBookmarks
                 var vcam = (CinemachineVirtualCamera)brain.ActiveVirtualCamera;
                 if (vcam.GetCinemachineComponent(CinemachineCore.Stage.Body) == null && vcam.GetCinemachineComponent(CinemachineCore.Stage.Aim) == null)
                 {
+                    if (undo)
+                        Undo.RegisterCompleteObjectUndo(vcam.gameObject, "Snap Cinemachine Virtual Camera");
+
                     vcam.transform.rotation = sceneview.rotation;
                     vcam.transform.position = sceneview.pivot - sceneview.camera.transform.forward * sceneview.cameraDistance;
                     if (linkFOV)
                         vcam.m_Lens.FieldOfView = sceneview.camera.fieldOfView;
+
+                    if (!undo)
+                    {
+                        EditorUtility.SetDirty(vcam.transform);
+                        EditorUtility.SetDirty(vcam);
+                    }
                 }
                 return;
             }
 #endif
+            if (undo)
+                Undo.RegisterCompleteObjectUndo(camera.gameObject, "Snap Camera");
 
             camera.transform.rotation = sceneview.rotation;
             camera.transform.position = sceneview.pivot - sceneview.camera.transform.forward * sceneview.cameraDistance;
             if (linkFOV)
                 camera.fieldOfView = sceneview.camera.fieldOfView;
+
+            if (!undo)
+            {
+                EditorUtility.SetDirty(camera.transform);
+                EditorUtility.SetDirty(camera);
+            }
         }
 
         static Bookmarks instance;
@@ -318,7 +358,15 @@ namespace UnityEditor.SceneViewBookmarks
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("Create"))
                 {
-                    // TODO : filter reserved names
+                    var delimiter = '/';
+                    var menuPath = bookmarkName.Split(delimiter);
+                    if (menuPath.Length > 1)
+                    {
+                        if (Array.Exists<string>(reservedTopMenuItemNames, e => e == menuPath[0]))
+                        {
+                            bookmarkName = "**" + bookmarkName;
+                        }
+                    }
                     Bookmarks.Instance.viewpoints.Add(new Viewpoint(bookmarkName, sceneview));
                     this.Close();
                 }
