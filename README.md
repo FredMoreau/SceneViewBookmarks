@@ -19,6 +19,7 @@
 - Bookmarks Editor Window.
 - Link Main Camera (or current Virtual Camera) to Scene View.
 - Dolly Zoom (FOV) with Ctrl + Mouse Scrollwheel.
+- Assign bookmarks a keyboard shortcut.
 
 # Known Limitations
 - If a Camera is Linked and a Bookmark is recalled, the Camera is moved without warning.
