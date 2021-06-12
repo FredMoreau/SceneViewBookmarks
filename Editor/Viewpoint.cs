@@ -5,7 +5,7 @@ using System;
 using Cinemachine;
 #endif
 
-// TODO : add grid direction
+// TODO : add grid direction and opacity
 
 namespace UnityEditor.SceneViewBookmarks
 {

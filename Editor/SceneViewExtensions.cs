@@ -120,7 +120,7 @@ namespace UnityEditor.SceneViewBookmarks
             flags |= state.showSkybox ? SceneViewStateFlags.ShowSkybox : 0;
             flags |= state.showFog ? SceneViewStateFlags.ShowFog : 0;
             flags |= state.showFlares ? SceneViewStateFlags.ShowFlares : 0;
-            flags |= state.showMaterialUpdate ? SceneViewStateFlags.ShowMaterialUpdate : 0;
+            flags |= state.alwaysRefresh ? SceneViewStateFlags.ShowMaterialUpdate : 0;
             flags |= state.showImageEffects ? SceneViewStateFlags.ShowImageEffects : 0;
             flags |= state.showParticleSystems ? SceneViewStateFlags.ShowParticleSystems : 0;
 
@@ -132,7 +132,7 @@ namespace UnityEditor.SceneViewBookmarks
             state.showSkybox = (flags & SceneViewStateFlags.ShowSkybox) == SceneViewStateFlags.ShowSkybox;
             state.showFog = (flags & SceneViewStateFlags.ShowFog) == SceneViewStateFlags.ShowFog;
             state.showFlares = (flags & SceneViewStateFlags.ShowFlares) == SceneViewStateFlags.ShowFlares;
-            state.showMaterialUpdate = (flags & SceneViewStateFlags.ShowMaterialUpdate) == SceneViewStateFlags.ShowMaterialUpdate;
+            state.alwaysRefresh = (flags & SceneViewStateFlags.ShowMaterialUpdate) == SceneViewStateFlags.ShowMaterialUpdate;
             state.showImageEffects = (flags & SceneViewStateFlags.ShowImageEffects) == SceneViewStateFlags.ShowImageEffects;
             state.showParticleSystems = (flags & SceneViewStateFlags.ShowParticleSystems) == SceneViewStateFlags.ShowParticleSystems;
         }
@@ -142,7 +142,7 @@ namespace UnityEditor.SceneViewBookmarks
             state.showSkybox = source.showSkybox;
             state.showFog = source.showFog;
             state.showFlares = source.showFlares;
-            state.showMaterialUpdate = source.showMaterialUpdate;
+            state.alwaysRefresh = source.alwaysRefresh;
             state.showImageEffects = source.showImageEffects;
             state.showParticleSystems = source.showParticleSystems;
         }

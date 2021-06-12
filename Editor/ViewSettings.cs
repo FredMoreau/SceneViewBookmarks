@@ -10,9 +10,9 @@ namespace UnityEditor.SceneViewBookmarks
     [Serializable]
     public struct ViewSettings
     {
-        public Vector3 pivot;
-        public Quaternion rotation;
-        public float size;
+        /*[HideInInspector]*/ public Vector3 pivot;
+        /*[HideInInspector]*/ public Quaternion rotation;
+        /*[HideInInspector]*/ public float size;
         public bool ortho;
         public float fov;
         public bool is2D;

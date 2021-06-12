@@ -84,9 +84,9 @@ namespace UnityEditor.SceneViewBookmarks
             refreshButton.AddToClassList("svbm-cell");
             topRowElement.Add(refreshButton);
 
-            Button saveButton = new Button(() => Bookmarks.Instance?.SaveToJson(Bookmarks.path)) { name = "Save", text = "Save" };
-            saveButton.AddToClassList("svbm-cell");
-            topRowElement.Add(saveButton);
+            //Button saveButton = new Button(() => Bookmarks.Instance?.SaveToJson(Bookmarks.path)) { name = "Save", text = "Save" };
+            //saveButton.AddToClassList("svbm-cell");
+            //topRowElement.Add(saveButton);
 
             IMGUIContainer header = new IMGUIContainer(OnCustomGUI);
             header.AddToClassList("sceneLightingButton");
@@ -113,7 +113,7 @@ namespace UnityEditor.SceneViewBookmarks
 
                 Button deleteButton = new Button(() =>
                 {
-                    Bookmarks.Instance.viewpoints.RemoveAt(index);
+                    Bookmarks.Instance.sceneViewpoints.RemoveAt(index);
                     RefreshUI();
                 }) { name = "DELETE", text = "DELETE" };
                 deleteButton.AddToClassList("svbm-cell-button");
@@ -206,10 +206,10 @@ namespace UnityEditor.SceneViewBookmarks
                     if (index <= 0)
                         return;
 
-                    var item = Bookmarks.Instance.viewpoints[index];
-                    Bookmarks.Instance.viewpoints.RemoveAt(index);
+                    var item = Bookmarks.Instance.sceneViewpoints[index];
+                    Bookmarks.Instance.sceneViewpoints.RemoveAt(index);
 
-                    Bookmarks.Instance.viewpoints.Insert(index - 1, item);
+                    Bookmarks.Instance.sceneViewpoints.Insert(index - 1, item);
                     RefreshUI();
                 })
                 { name = "Up", text = "Up" };
@@ -218,13 +218,13 @@ namespace UnityEditor.SceneViewBookmarks
 
                 Button moveDownButton = new Button(() =>
                 {
-                    if (index >= Bookmarks.Instance.viewpoints.Count - 1)
+                    if (index >= Bookmarks.Instance.sceneViewpoints.Count - 1)
                         return;
 
-                    var item = Bookmarks.Instance.viewpoints[index];
-                    Bookmarks.Instance.viewpoints.RemoveAt(index);
+                    var item = Bookmarks.Instance.sceneViewpoints[index];
+                    Bookmarks.Instance.sceneViewpoints.RemoveAt(index);
 
-                    Bookmarks.Instance.viewpoints.Insert(index + 1, item);
+                    Bookmarks.Instance.sceneViewpoints.Insert(index + 1, item);
                     RefreshUI();
                 })
                 { name = "Down", text = "Dn" };
