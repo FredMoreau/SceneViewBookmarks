@@ -64,6 +64,15 @@ namespace UnityEditor.SceneViewBookmarks
             lockedLayers = Tools.lockedLayers;
         }
 
+        public Viewpoint(string name, SceneView view, Overrides overrides)
+        {
+            this.name = name;
+            settings = new ViewSettings(view);
+            visibleLayers = Tools.visibleLayers;
+            lockedLayers = Tools.lockedLayers;
+            this.overrides = overrides;
+        }
+
         public void Load(SceneView view)
         {
             view.ApplySettings(settings, overrides);

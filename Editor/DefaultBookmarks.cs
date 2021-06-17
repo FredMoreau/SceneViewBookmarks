@@ -2,11 +2,14 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 namespace UnityEditor.SceneViewBookmarks
 {
     class DefaultBookmarks : ScriptableObject/*, ISerializationCallbackReceiver*/
     {
+        public static Action onEditorBookmarksChange;
+
         [SerializeField] internal List<Viewpoint> viewpoints;
 
         private static DefaultBookmarks _instance;
@@ -36,12 +39,14 @@ namespace UnityEditor.SceneViewBookmarks
         {
             Instance.viewpoints.Add(viewpoint);
             Save();
+            onEditorBookmarksChange?.Invoke();
         }
 
         public static void Remove (Viewpoint viewpoint)
         {
             Instance.viewpoints.Remove(viewpoint);
             Save();
+            onEditorBookmarksChange?.Invoke();
         }
 
         private static void Save()
@@ -67,6 +72,7 @@ namespace UnityEditor.SceneViewBookmarks
                 Debug.Log("<color=yellow>Default Reset</color>");
                 Save();
             }
+            onEditorBookmarksChange?.Invoke();
         }
 
         internal static SerializedObject GetSerializedSettings()

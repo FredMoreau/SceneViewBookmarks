@@ -1,7 +1,7 @@
 {
   "name": "com.unity.sceneview.bookmarks",
   "displayName": "SceneView Bookmarks",
-  "version": "0.1.0-preview.1",
+  "version": "0.1.1-preview.3",
   "unity": "2019.3",
   "description": "Scene View shortcuts to bookmark view positions and states (layer visibility and locked state, shading mode, lighting, effects, grid visibility, etc).\nIncludes \n *Bookmarks\n *Camera sync\n *Cinemachine Virtual Cameras shorcuts.",
   "author": {
@@ -13,8 +13,11 @@
     "unity",
     "scene view"
   ],
-    "repository": {
+  "repository": {
     "type": "git",
     "url": "git@github.com:FredMoreau/SceneViewBookmarks.git"
+  },
+  "dependencies": {
+    "com.unity.editorcoroutines": ""
   }
 }

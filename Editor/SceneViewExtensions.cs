@@ -23,7 +23,7 @@ namespace UnityEditor.SceneViewBookmarks
                 view.size = settings.size;
             }
 
-            if (overrides.Contains(Viewpoint.Overrides.Direction))
+            if (overrides.Contains(Viewpoint.Overrides.Direction) && !view.in2DMode)
                 view.rotation = settings.rotation;
 
             if (overrides.Contains(Viewpoint.Overrides.FieldOfView))
@@ -150,6 +150,81 @@ namespace UnityEditor.SceneViewBookmarks
         public static bool Contains(this Viewpoint.Overrides overrides, Viewpoint.Overrides other)
         {
             return (overrides & other) == other;
+        }
+
+        public static void AlignToSelection(this SceneView sceneview)
+        {
+            var selectedObject = Selection.activeGameObject;
+            if (selectedObject == null)
+                return;
+
+            sceneview.in2DMode = false;
+            sceneview.AlignViewToObject(selectedObject.transform);
+
+            //sceneview.rotation = selectedObject.transform.rotation;
+
+            //if (Physics.Raycast(selectedObject.transform.position, selectedObject.transform.forward, out RaycastHit hit, 1000f, -5, QueryTriggerInteraction.Collide))
+            //{
+            //    sceneview.pivot = hit.point;
+
+            //}
+            //else
+            //{
+            //    sceneview.pivot = selectedObject.transform.position + selectedObject.transform.forward * 10f;
+            //}
+
+            var cam = selectedObject.GetComponent<Camera>();
+            if (cam != null)
+                sceneview.cameraSettings.fieldOfView = cam.fieldOfView;
+#if CINEMACHINE
+            var vcam = selectedObject.GetComponent<CinemachineVirtualCamera>();
+            if (vcam != null)
+                sceneview.cameraSettings.fieldOfView = vcam.m_Lens.FieldOfView;
+#endif
+        }
+
+        public static void SnapCamera(this SceneView sceneview, Camera camera, bool linkFOV = false, bool undo = false)
+        {
+#if CINEMACHINE
+            CinemachineBrain brain = camera.GetComponent<CinemachineBrain>();
+            if (brain != null)
+            {
+                if (brain.ActiveVirtualCamera == null)
+                    return;
+
+                var vcam = (CinemachineVirtualCamera)brain.ActiveVirtualCamera;
+                if (vcam.GetCinemachineComponent(CinemachineCore.Stage.Body) == null && vcam.GetCinemachineComponent(CinemachineCore.Stage.Aim) == null)
+                {
+                    if (undo)
+                        Undo.RegisterCompleteObjectUndo(vcam.gameObject, "Snap Cinemachine Virtual Camera");
+
+                    vcam.transform.rotation = sceneview.rotation;
+                    vcam.transform.position = sceneview.pivot - sceneview.camera.transform.forward * sceneview.cameraDistance;
+                    if (linkFOV)
+                        vcam.m_Lens.FieldOfView = sceneview.camera.fieldOfView;
+
+                    if (!undo)
+                    {
+                        EditorUtility.SetDirty(vcam.transform);
+                        EditorUtility.SetDirty(vcam);
+                    }
+                }
+                return;
+            }
+#endif
+            if (undo)
+                Undo.RegisterCompleteObjectUndo(camera.gameObject, "Snap Camera");
+
+            camera.transform.rotation = sceneview.rotation;
+            camera.transform.position = sceneview.pivot - sceneview.camera.transform.forward * sceneview.cameraDistance;
+            if (linkFOV)
+                camera.fieldOfView = sceneview.camera.fieldOfView;
+
+            if (!undo)
+            {
+                EditorUtility.SetDirty(camera.transform);
+                EditorUtility.SetDirty(camera);
+            }
         }
     }
 }

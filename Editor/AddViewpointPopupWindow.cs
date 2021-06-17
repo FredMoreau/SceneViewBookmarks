@@ -1,5 +1,7 @@
 using System;
 using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
 
 namespace UnityEditor.SceneViewBookmarks
 {
@@ -9,14 +11,15 @@ namespace UnityEditor.SceneViewBookmarks
 
         public enum BookmarkSaveLocation { Scene, Preferences }
 
+        public Viewpoint.Overrides overrides = Viewpoint.Overrides.Position | Viewpoint.Overrides.Direction | Viewpoint.Overrides.FieldOfView | Viewpoint.Overrides.IsOrtho | Viewpoint.Overrides.Is2D;
         public BookmarkSaveLocation bookmarkSaveLocation;
         public SceneView sceneview;
-        public string bookmarkName = "New Bookmark";
+        [SerializeField] string bookmarkName = "New Bookmark";
 
         public static void Open(SceneView sceneview)
         {
             AddViewpointPopupWindow window = CreateInstance<AddViewpointPopupWindow>();
-            window.position = new Rect(sceneview.position.x + sceneview.position.width * 0.5f - 125, sceneview.position.y + sceneview.position.height * 0.5f - 75, 250, 150);
+            window.position = new Rect(sceneview.position.x + sceneview.position.width * 0.5f - 125, sceneview.position.y + sceneview.position.height * 0.5f - 75, 300, 110);
             window.titleContent = new GUIContent("Bookmark Scene View as");
             window.sceneview = sceneview;
             //window.ShowPopup();
@@ -24,39 +27,62 @@ namespace UnityEditor.SceneViewBookmarks
             window.ShowModalUtility();
         }
 
-        void OnGUI()
+        private void CreateGUI()
         {
-            EditorGUILayout.LabelField("Bookmark Settings", EditorStyles.wordWrappedLabel);
-            bookmarkName = EditorGUILayout.TextField(bookmarkName);
-            bookmarkSaveLocation = (BookmarkSaveLocation)EditorGUILayout.EnumPopup("Bookmark Location", bookmarkSaveLocation);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Create"))
+            VisualElement root = rootVisualElement;
+            root.Add(new PropertyField() { name = "Name", bindingPath = nameof(bookmarkName)});
+            root.Add(new PropertyField() { bindingPath = nameof(overrides), name = "Overrides" });
+            root.Add(new PropertyField() { bindingPath = nameof(bookmarkSaveLocation), name = "Location" });
+
+            VisualElement buttons = new VisualElement()
             {
-                var delimiter = '/';
-                var menuPath = bookmarkName.Split(delimiter);
-                if (menuPath.Length > 1)
-                {
-                    if (Array.Exists<string>(reservedTopMenuItemNames, e => e == menuPath[0]))
-                    {
-                        bookmarkName = "**" + bookmarkName;
-                    }
-                }
-                switch (bookmarkSaveLocation)
-                {
-                    case BookmarkSaveLocation.Scene:
-                        Bookmarks.Instance.sceneViewpoints.Add(new Viewpoint(bookmarkName, sceneview));
-                        break;
-                    case BookmarkSaveLocation.Preferences:
-                        Bookmarks.Instance.builtinViewpoints.Add(new Viewpoint(bookmarkName, sceneview));
-                        break;
-                }
-                this.Close();
-            }
-            else if (GUILayout.Button("Cancel"))
+                name = "",
+                tooltip = "",
+            };
+            buttons.AddToClassList("unity-editor-toolbar");
+
+            buttons.Add(new Button(() => CreateBookmark()) { name = "Create", text = "Create" });
+            buttons.Add(new Button(() => Close()) { name = "Close", text = "Close" });
+
+            root.Add(buttons);
+            root.Bind(new SerializedObject(this));
+        }
+
+        //void OnGUI()
+        //{
+        //    EditorGUILayout.LabelField("Bookmark Settings", EditorStyles.wordWrappedLabel);
+        //    bookmarkName = EditorGUILayout.TextField(bookmarkName);
+        //    overrides = (Viewpoint.Overrides)EditorGUILayout.EnumFlagsField("Overrides", overrides);
+        //    bookmarkSaveLocation = (BookmarkSaveLocation)EditorGUILayout.EnumPopup("Bookmark Location", bookmarkSaveLocation);
+        //    GUILayout.BeginHorizontal();
+        //    if (GUILayout.Button("Create"))
+        //        CreateBookmark();
+        //    else if (GUILayout.Button("Cancel"))
+        //        this.Close();
+        //    GUILayout.EndHorizontal();
+        //}
+
+        public void CreateBookmark()
+        {
+            var delimiter = '/';
+            var menuPath = bookmarkName.Split(delimiter);
+            if (menuPath.Length > 1)
             {
-                this.Close();
+                if (Array.Exists<string>(reservedTopMenuItemNames, e => e == menuPath[0]))
+                {
+                    bookmarkName = "**" + bookmarkName;
+                }
             }
-            GUILayout.EndHorizontal();
+            switch (bookmarkSaveLocation)
+            {
+                case BookmarkSaveLocation.Scene:
+                    SceneBookmarks.Add(new Viewpoint(bookmarkName, sceneview, overrides));
+                    break;
+                case BookmarkSaveLocation.Preferences:
+                    DefaultBookmarks.Add(new Viewpoint(bookmarkName, sceneview, overrides));
+                    break;
+            }
+            this.Close();
         }
     }
 }
