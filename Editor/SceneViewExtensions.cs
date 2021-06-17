@@ -183,6 +183,28 @@ namespace UnityEditor.SceneViewBookmarks
 #endif
         }
 
+#if CINEMACHINE
+        public static void SnapVirtualCamera(this SceneView sceneview, CinemachineVirtualCamera vcam, bool linkFOV = false, bool undo = false)
+        {
+            if (vcam.GetCinemachineComponent(CinemachineCore.Stage.Body) == null && vcam.GetCinemachineComponent(CinemachineCore.Stage.Aim) == null)
+            {
+                if (undo)
+                    Undo.RegisterCompleteObjectUndo(vcam.gameObject, "Snap Cinemachine Virtual Camera");
+
+                vcam.transform.rotation = sceneview.rotation;
+                vcam.transform.position = sceneview.pivot - sceneview.camera.transform.forward * sceneview.cameraDistance;
+                if (linkFOV)
+                    vcam.m_Lens.FieldOfView = sceneview.camera.fieldOfView;
+
+                if (!undo)
+                {
+                    EditorUtility.SetDirty(vcam.transform);
+                    EditorUtility.SetDirty(vcam);
+                }
+            }
+        }
+#endif
+
         public static void SnapCamera(this SceneView sceneview, Camera camera, bool linkFOV = false, bool undo = false)
         {
 #if CINEMACHINE
@@ -193,22 +215,7 @@ namespace UnityEditor.SceneViewBookmarks
                     return;
 
                 var vcam = (CinemachineVirtualCamera)brain.ActiveVirtualCamera;
-                if (vcam.GetCinemachineComponent(CinemachineCore.Stage.Body) == null && vcam.GetCinemachineComponent(CinemachineCore.Stage.Aim) == null)
-                {
-                    if (undo)
-                        Undo.RegisterCompleteObjectUndo(vcam.gameObject, "Snap Cinemachine Virtual Camera");
-
-                    vcam.transform.rotation = sceneview.rotation;
-                    vcam.transform.position = sceneview.pivot - sceneview.camera.transform.forward * sceneview.cameraDistance;
-                    if (linkFOV)
-                        vcam.m_Lens.FieldOfView = sceneview.camera.fieldOfView;
-
-                    if (!undo)
-                    {
-                        EditorUtility.SetDirty(vcam.transform);
-                        EditorUtility.SetDirty(vcam);
-                    }
-                }
+                SnapVirtualCamera(sceneview, vcam, linkFOV, undo);
                 return;
             }
 #endif

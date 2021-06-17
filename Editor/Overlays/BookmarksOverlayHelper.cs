@@ -146,7 +146,33 @@ namespace UnityEditor.SceneViewBookmarks
             return root;
         }
 
-        internal static VisualElement BookmarksDropdown(string title, Texture image, string tooltip, GenericMenu menu)
+        internal static VisualElement BookmarksSettingsDropdown(Texture image, string tooltip, EventCallback<MouseDownEvent> mouseDownEvent)
+        {
+            VisualElement root = new VisualElement();
+
+            VisualElement blk = new VisualElement() { tooltip = tooltip };
+            blk.AddToClassList("unity-text-element");
+            blk.AddToClassList("unity-toolbar-button");
+            blk.AddToClassList("unity-editor-toolbar-element");
+
+            Image icon = new Image();
+            icon.image = image;
+            icon.AddToClassList("unity-image");
+            icon.AddToClassList("unity-editor-toolbar-element__icon");
+            blk.Add(icon);
+
+            VisualElement arrow = new VisualElement();
+            arrow.AddToClassList("unity-icon-arrow");
+            blk.Add(arrow);
+
+            blk.RegisterCallback(mouseDownEvent);
+
+            root.Add(blk);
+
+            return root;
+        }
+
+        internal static VisualElement BookmarksDropdown(string title, Texture image, string tooltip, EventCallback<MouseDownEvent> mouseDownEvent = null)
         {
             VisualElement root = new VisualElement();
 
@@ -170,10 +196,7 @@ namespace UnityEditor.SceneViewBookmarks
             arrow.AddToClassList("unity-icon-arrow");
             blk.Add(arrow);
 
-            blk.RegisterCallback<MouseDownEvent>((x) =>
-            {
-                menu.DropDown(blk.worldBound);
-            });
+            blk.RegisterCallback(mouseDownEvent);
 
             root.Add(blk);
 

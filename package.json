@@ -16,8 +16,5 @@
   "repository": {
     "type": "git",
     "url": "git@github.com:FredMoreau/SceneViewBookmarks.git"
-  },
-  "dependencies": {
-    "com.unity.editorcoroutines": ""
   }
 }

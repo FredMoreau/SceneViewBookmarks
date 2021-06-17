@@ -8,20 +8,22 @@ using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using UnityEditor.Toolbars;
 
+#if CINEMACHINE
+using Cinemachine;
+#endif
+
 namespace UnityEditor.SceneViewBookmarks
 {
     [EditorToolbarElement(id, typeof(SceneView))]
-    class BookmarksEditorToolbarCameras : SceneViewToolbarElement
+    class BookmarksEditorToolbarCameras : VisualElement, IAccessContainerWindow
     {
         public const string id = "Cameras/Cameras";
+
+        public EditorWindow containerWindow { get; set; }
 
         BookmarksEditorToolbarCameras()
         {
             tooltip = "";
-        }
-
-        protected override void OnInitialized()
-        {
             UpdateContent();
             // TODO : find event to update the list of cameras
         }
@@ -32,24 +34,27 @@ namespace UnityEditor.SceneViewBookmarks
             Add(BookmarksOverlayHelper.BookmarksDropdown("Cameras",
                 EditorGUIUtility.IconContent("SceneViewCamera").image,
                 "",
-                BookmarksOverlayHelper.SceneCamerasMenu(containerWindow as SceneView)));
+                OnClick));
+        }
+
+        void OnClick(MouseDownEvent evt)
+        {
+            BookmarksOverlayHelper.SceneCamerasMenu(containerWindow as SceneView).DropDown(worldBound);
         }
     }
 
 #if CINEMACHINE
     [EditorToolbarElement(id, typeof(SceneView))]
     [Icon("Packages/com.unity.cinemachine/Gizmos/cm_logo.png")]
-    class BookmarksEditorToolbarVirtualCameras : SceneViewToolbarElement
+    class BookmarksEditorToolbarVirtualCameras : VisualElement, IAccessContainerWindow
     {
         public const string id = "Cameras/VirtualCameras";
+
+        public EditorWindow containerWindow { get; set; }
 
         BookmarksEditorToolbarVirtualCameras()
         {
             tooltip = "";
-        }
-
-        protected override void OnInitialized()
-        {
             UpdateContent();
             // TODO : find event to update the list of cameras
         }
@@ -60,13 +65,42 @@ namespace UnityEditor.SceneViewBookmarks
             Add(BookmarksOverlayHelper.BookmarksDropdown("Cinemachine",
                 AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.unity.cinemachine/Gizmos/cm_logo.png"),
                 "",
-                BookmarksOverlayHelper.SceneVirtualCamerasMenu(containerWindow as SceneView)));
+                OnClick));
+        }
+
+        void OnClick(MouseDownEvent evt)
+        {
+            BookmarksOverlayHelper.SceneVirtualCamerasMenu(containerWindow as SceneView).DropDown(worldBound);
         }
     }
 #endif
 
     [EditorToolbarElement(id, typeof(SceneView))]
-    class BookmarksEditorToolbarCamerasDropdown : EditorToolbarDropdownToggle, IAccessContainerWindow
+    class BookmarksEditorToolbarAddCameraButton : EditorToolbarButton, IAccessContainerWindow
+    {
+        public const string id = "Cameras/AddButton";
+
+        public EditorWindow containerWindow { get; set; }
+
+        public BookmarksEditorToolbarAddCameraButton()
+        {
+            icon = (Texture2D)EditorGUIUtility.IconContent("d_Toolbar Plus@2x").image;
+            tooltip = "Create new Camera.";
+            clicked += () =>
+            {
+#if CINEMACHINE
+                var cm = new GameObject("Virtual Camera", new System.Type[1] { typeof(CinemachineVirtualCamera) }).GetComponent<CinemachineVirtualCamera>();
+                (containerWindow as SceneView)?.SnapVirtualCamera(cm, true, false);
+#else
+                var cam = new GameObject("Camera", new System.Type[1] { typeof(Camera) }).GetComponent<Camera>();
+                (containerWindow as SceneView)?.SnapCamera(cam, true, false);
+#endif
+            };
+        }
+    }
+
+    [EditorToolbarElement(id, typeof(SceneView))]
+    class BookmarksEditorToolbarCamerasDropdown : VisualElement, IAccessContainerWindow
     {
         public const string id = "Cameras/Options";
 
@@ -75,34 +109,58 @@ namespace UnityEditor.SceneViewBookmarks
         BookmarksEditorToolbarCamerasDropdown()
         {
             tooltip = "";
-            icon = (Texture2D)EditorGUIUtility.IconContent("d_SettingsIcon@2x").image;
-            dropdownClicked += ShowMenu;
+            Add(BookmarksOverlayHelper.BookmarksSettingsDropdown(
+                EditorGUIUtility.IconContent("d_SettingsIcon@2x").image,
+                "",
+                OnClick));
         }
 
-        void ShowMenu()
+        void OnClick(MouseDownEvent evt)
         {
-            var menu = BookmarksOverlayHelper.CameraToolsMenu(SceneView.lastActiveSceneView);
-            menu.DropDown(worldBound);
+            BookmarksOverlayHelper.CameraToolsMenu(containerWindow as SceneView).DropDown(worldBound);
         }
     }
+
+    // TODO : add an item to force full panel
+    //[EditorToolbarElement(id, typeof(SceneView))]
+    //class BookmarksEditorToolbarCamerasForceDropdown : VisualElement, IAccessContainerWindow
+    //{
+    //    public const string id = "Cameras/Force";
+
+    //    public EditorWindow containerWindow { get; set; }
+
+    //    BookmarksEditorToolbarCamerasForceDropdown()
+    //    {
+    //        tooltip = "";
+    //        var btn = new Button() { text = "#" };
+    //        btn.RegisterCallback<MouseDownEvent>(OnClick);
+    //        Add(btn);
+    //    }
+
+    //    void OnClick(MouseDownEvent evt)
+    //    {
+            
+    //    }
+    //}
 
     [Overlay(typeof(SceneView), "Cameras")]
     [Icon("Packages/com.unity.cinemachine/Gizmos/cm_logo.png")]
     public class CamerasToolbar : ToolbarOverlay
     {
         Foldout camerasFoldout, cmCamerasFoldout, optionsFoldout;
-        bool camerasFoldoutOn = true, cmCamerasFoldoutOn = true, optionsFoldoutOn = false;
+        bool camerasFoldoutOn = true, cmCamerasFoldoutOn = true, optionsFoldoutOn = false, forceFullPanel = false;
 
         CamerasToolbar() : base(
             BookmarksEditorToolbarCameras.id,
 #if CINEMACHINE
             BookmarksEditorToolbarVirtualCameras.id,
 #endif
+            BookmarksEditorToolbarAddCameraButton.id,
             BookmarksEditorToolbarCamerasDropdown.id)
         { }
         public override VisualElement CreatePanelContent()
         {
-            if (!collapsed)
+            if (!collapsed && !forceFullPanel)
                 return base.CreatePanelContent();
             else // if collapsed bring a full blown window
             {
@@ -117,6 +175,19 @@ namespace UnityEditor.SceneViewBookmarks
                 cmCamerasFoldout.Add(BookmarksOverlayHelper.SceneCMVCamerasVE());
                 cmCamerasFoldout.RegisterValueChangedCallback((x) => cmCamerasFoldoutOn = x.newValue);
                 root.Add(cmCamerasFoldout);
+
+                var addButton = new Button(() =>
+                {
+#if CINEMACHINE
+                    var cm = new GameObject("Virtual Camera", new System.Type[1] { typeof(CinemachineVirtualCamera) }).GetComponent<CinemachineVirtualCamera>();
+                    (containerWindow as SceneView)?.SnapVirtualCamera(cm, true, false);
+#else
+                    var cam = new GameObject("Camera", new System.Type[1] { typeof(Camera) }).GetComponent<Camera>();
+                    (containerWindow as SceneView)?.SnapCamera(cam, true, false);
+#endif
+                })
+                { text = "New Camera" };
+                root.Add(addButton);
 
                 optionsFoldout = new Foldout() { value = optionsFoldoutOn, name = "Options", text = "Options" };
                 optionsFoldout.Add(BookmarksOverlayHelper.OptionsVE());

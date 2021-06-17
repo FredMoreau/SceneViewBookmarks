@@ -90,7 +90,6 @@ namespace UnityEditor.SceneViewBookmarks
 
         internal static void SaveSceneBookmarks(Scene scene)
         {
-            Debug.Log(scene.path);
             if (Count == 0)
                 return;
 

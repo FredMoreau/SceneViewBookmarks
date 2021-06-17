@@ -1,27 +1,21 @@
 #if UNITY_2021_2_OR_NEWER
-using System.Collections.Generic;
-using System.Collections;
 using UnityEngine;
-using UnityEditor;
 using UnityEditor.Overlays;
 using UnityEngine.UIElements;
-using UnityEditor.UIElements;
 using UnityEditor.Toolbars;
 
 namespace UnityEditor.SceneViewBookmarks
 {
     [EditorToolbarElement(id, typeof(SceneView))]
-    class BookmarksEditorToolbarEditorBookmarks : SceneViewToolbarElement
+    class BookmarksEditorToolbarEditorBookmarks : VisualElement, IAccessContainerWindow //ToolbarOverlayElement
     {
         public const string id = "Bookmarks/Editor";
+
+        public EditorWindow containerWindow { get; set; }
 
         BookmarksEditorToolbarEditorBookmarks()
         {
             tooltip = "";
-        }
-
-        protected override void OnInitialized()
-        {
             UpdateContent();
             DefaultBookmarks.onEditorBookmarksChange += () =>
             {
@@ -35,22 +29,25 @@ namespace UnityEditor.SceneViewBookmarks
             Add(BookmarksOverlayHelper.BookmarksDropdown("User",
                 EditorGUIUtility.IconContent("d_FrameCapture@2x").image,
                 "",
-                BookmarksOverlayHelper.UserBookmarksMenu(containerWindow as SceneView)));
+                OnClick));
+        }
+
+        void OnClick(MouseDownEvent evt)
+        {
+            BookmarksOverlayHelper.UserBookmarksMenu(containerWindow as SceneView).DropDown(worldBound);
         }
     }
 
     [EditorToolbarElement(id, typeof(SceneView))]
-    class BookmarksEditorToolbarSceneBookmarks : SceneViewToolbarElement
+    class BookmarksEditorToolbarSceneBookmarks : VisualElement, IAccessContainerWindow
     {
         public const string id = "Bookmarks/Scene";
+
+        public EditorWindow containerWindow { get; set; }
 
         BookmarksEditorToolbarSceneBookmarks()
         {
             tooltip = "";
-        }
-
-        protected override void OnInitialized()
-        {
             UpdateContent();
             SceneBookmarks.onSceneBookmarksChange += () =>
             {
@@ -64,7 +61,12 @@ namespace UnityEditor.SceneViewBookmarks
             Add(BookmarksOverlayHelper.BookmarksDropdown("Scene",
                 EditorGUIUtility.IconContent("d_FrameCapture@2x").image,
                 "",
-                BookmarksOverlayHelper.SceneBookmarksMenu(containerWindow as SceneView)));
+                OnClick));
+        }
+
+        void OnClick(MouseDownEvent evt)
+        {
+            BookmarksOverlayHelper.SceneBookmarksMenu(containerWindow as SceneView).DropDown(worldBound);
         }
     }
 
@@ -82,7 +84,7 @@ namespace UnityEditor.SceneViewBookmarks
     }
 
     [EditorToolbarElement(id, typeof(SceneView))]
-    class BookmarksEditorToolbarOptionsDropdown : EditorToolbarDropdownToggle, IAccessContainerWindow
+    class BookmarksEditorToolbarOptionsDropdown : VisualElement, IAccessContainerWindow
     {
         public const string id = "Bookmarks/Options";
 
@@ -91,14 +93,15 @@ namespace UnityEditor.SceneViewBookmarks
         BookmarksEditorToolbarOptionsDropdown()
         {
             tooltip = "";
-            icon = (Texture2D)EditorGUIUtility.IconContent("d_SettingsIcon@2x").image;
-            dropdownClicked += ShowMenu;
+            Add(BookmarksOverlayHelper.BookmarksSettingsDropdown(
+                EditorGUIUtility.IconContent("d_SettingsIcon@2x").image,
+                "",
+                OnClick));
         }
 
-        void ShowMenu()
+        void OnClick(MouseDownEvent evt)
         {
-            var menu = BookmarksOverlayHelper.ExtraToolsMenu(containerWindow as SceneView);
-            menu.DropDown(worldBound);
+            BookmarksOverlayHelper.ExtraToolsMenu(containerWindow as SceneView).DropDown(worldBound);
         }
     }
 
