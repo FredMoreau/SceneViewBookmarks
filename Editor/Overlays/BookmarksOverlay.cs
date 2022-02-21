@@ -20,16 +20,35 @@ namespace UnityEditor.SceneViewBookmarks
 
         public override void OnCreated()
         {
-            DefaultBookmarks.onEditorBookmarksChange += () =>
-            {
-                editorFoldout.Clear();
-                editorFoldout.Add(BookmarksOverlayHelper.BuiltinBookmarksVE());
-            };
-            SceneBookmarks.onSceneBookmarksChange += () =>
-            {
-                sceneFoldout.Clear();
-                sceneFoldout.Add(BookmarksOverlayHelper.SceneBookmarksVE());
-            };
+            DefaultBookmarks.onEditorBookmarksChange += EditorBookmarksChange;
+            SceneBookmarks.onSceneBookmarksChange += SceneBookmarksChange;
+
+            //DefaultBookmarks.onEditorBookmarksChange += () =>
+            //{
+            //    editorFoldout.Clear();
+            //    editorFoldout.Add(BookmarksOverlayHelper.BuiltinBookmarksVE());
+            //};
+            //SceneBookmarks.onSceneBookmarksChange += () =>
+            //{
+            //    sceneFoldout.Clear();
+            //    sceneFoldout.Add(BookmarksOverlayHelper.SceneBookmarksVE());
+            //};
+        }
+
+        public void EditorBookmarksChange ()
+        {
+            if (editorFoldout == null)
+                return;
+            editorFoldout.Clear();
+            editorFoldout.Add(BookmarksOverlayHelper.BuiltinBookmarksVE());
+        }
+
+        public void SceneBookmarksChange()
+        {
+            if (sceneFoldout == null)
+                return;
+            sceneFoldout.Clear();
+            sceneFoldout.Add(BookmarksOverlayHelper.SceneBookmarksVE());
         }
 
         public override VisualElement CreatePanelContent()
