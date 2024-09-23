@@ -95,6 +95,9 @@ namespace UnityEditor.SceneViewBookmarks
         private static void SceneView_duringSceneGui(SceneView sceneview)
         {
             var e = Event.current;
+            if (e.type == EventType.Repaint)
+                return;
+
             if (e.type == EventType.KeyUp)
             {
                 Viewpoint shortcutView;
@@ -113,6 +116,7 @@ namespace UnityEditor.SceneViewBookmarks
             else if (e.control && e.type == EventType.MouseDown && e.button == 1)
             {
                 QuickAccessMenu(sceneview).ShowAsContext();
+                e.Use();
             }
 
             if (linkMainCamera)
